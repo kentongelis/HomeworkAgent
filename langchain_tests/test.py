@@ -29,4 +29,5 @@ for md_file in markdown_files:
 # 3️⃣ Print or use the content
 for filename, content in lessons_content.items():
     print(f"\n===== {filename} =====")
-    print(content[:500])  # print first 500 chars only for brevity
+    print(content)  # print first 500 chars only for brevity
+    break
