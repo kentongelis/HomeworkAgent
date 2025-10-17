@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+
+{% extends 'base.html' %}
+{% block content %}
+
+<body>
+
+<h2>Tutors</h2>
+
+{% for tutor in tutors %}
+<div class="lesson-box" id="box-{{ tutor.name }}">
+    <div class="lesson-title">{{ tutor.name }}</div>
+    <button onclick="toggleChat('{{ tutor.name }}', 'ask')">Ask Tutor</button>
+    <button onclick="toggleChat('{{ tutor.name }}', 'quiz')">Take Quiz</button>
+
+    <div class="chat-section" id="section-{{ tutor.name }}">
+        <div class="chat-box" id="chat-{{ tutor.name }}"></div>
+
+        <!-- Ask mode input -->
+        <div class="input-row" id="input-{{ tutor.name }}">
+            <input type="text" id="input-text-{{ tutor.name }}" placeholder="Type your message...">
+            <button onclick="sendAsk('{{ tutor.name }}')">Send</button>
+        </div>
+
+        <!-- Quiz setup: choose number of questions -->
+        <div class="input-row" id="quiz-setup-{{ tutor.name }}">
+            <label>Number of Questions: </label>
+            <input type="number" id="quiz-num-{{ tutor.name }}" min="1" max="20" value="5">
+            <button onclick="startQuiz('{{ tutor.name }}')">Start Quiz</button>
+        </div>
+
+        <!-- Quiz answer input -->
+        <div class="input-row" id="quiz-answer-{{ tutor.name }}">
+            <input type="text" id="quiz-text-{{ tutor.name }}" placeholder="Answer...">
+            <button onclick="sendQuiz('{{ tutor.name }}')">Submit</button>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<script>
+function toggleChat(name, mode) {
+    const section = document.getElementById("section-" + name);
+    const askInput = document.getElementById("input-" + name);
+    const quizSetup = document.getElementById("quiz-setup-" + name);
+    const quizAnswer = document.getElementById("quiz-answer-" + name);
+
+    section.style.display = "block";
+
+    if (mode === "ask") {
+        askInput.style.display = "block";
+        quizSetup.style.display = "none";
+        quizAnswer.style.display = "none";
+        logMessage(name, "System", "Chat mode: Ask Tutor activated.");
+    } else if (mode === "quiz") {
+        askInput.style.display = "none";
+        quizSetup.style.display = "block";
+        quizAnswer.style.display = "none";
+        logMessage(name, "System", "Select number of quiz questions and click Start.");
+    }
+}
+
+function startQuiz(name) {
+    const num = document.getElementById("quiz-num-" + name).value || 5;
+    const quizSetup = document.getElementById("quiz-setup-" + name);
+    const quizAnswer = document.getElementById("quiz-answer-" + name);
+
+    logMessage(name, "System", `Starting quiz with ${num} questions...`);
+
+    fetch("/quiz", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ name: name, action: "start", num_questions: parseInt(num) })
+    })
+    .then(r => r.json())
+    .then(data => {
+        quizSetup.style.display = "none";
+        quizAnswer.style.display = "block";
+        if (data.question) logMessage(name, "Tutor", data.question);
+        else if (data.error) logMessage(name, "System", data.error);
+    });
+}
+
+function sendAsk(name) {
+    const input = document.getElementById("input-text-" + name);
+    const question = input.value.trim();
+    if (!question) return;
+    logMessage(name, "You", question);
+    input.value = "";
+
+    fetch("/ask", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ name: name, question: question })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.answer) logMessage(name, "Tutor", data.answer);
+        else if (data.error) logMessage(name, "System", data.error);
+    });
+}
+
+function sendQuiz(name) {
+    const input = document.getElementById("quiz-text-" + name);
+    const answer = input.value.trim();
+    if (!answer) return;
+    logMessage(name, "You", answer);
+    input.value = "";
+
+    fetch("/quiz", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ name: name, action: "answer", answer: answer })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.feedback) logMessage(name, "Tutor", data.feedback);
+        if (data.next) logMessage(name, "Tutor", data.next);
+        if (data.error) logMessage(name, "System", data.error);
+    });
+}
+
+function logMessage(name, sender, message) {
+    const chat = document.getElementById("chat-" + name);
+    const msgDiv = document.createElement("div");
+    if (sender === "You") msgDiv.className = "msg-user";
+    else if (sender === "Tutor") msgDiv.className = "msg-bot";
+    else msgDiv.className = "msg-system";
+
+    msgDiv.innerHTML = `<b>${sender}:</b> ${message}`;
+    chat.appendChild(msgDiv);
+    chat.scrollTop = chat.scrollHeight;
+}
+</script>
+
+</body>
+
+{% endblock %}

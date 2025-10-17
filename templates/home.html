@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+
+{% extends 'base.html' %}
+{% block content %}
+
+<h1>Homework Agent</h1>
+
+<form id="repo-form" action="/tutor" method="GET">
+    <label>
+        Paste the link of the Github repo: <br>
+        <input type="text" name="path" required>
+    </label>
+
+    <input type="submit" value="Submit">
+</form>
+
+<!-- Loading Spinner -->
+<div id="loading-spinner" class="spinner hidden">
+    <div class="loader"></div>
+    <p>Loading tutors...</p>
+</div>
+
+<script>
+document.getElementById('repo-form').addEventListener('submit', function() {
+    document.getElementById('loading-spinner').classList.remove('hidden');
+});
+</script>
+
+{% endblock %}
