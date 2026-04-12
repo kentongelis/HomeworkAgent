@@ -105,7 +105,6 @@ class MarkdownTutor:
         ]
         """
 
-        # ✅ Instead of a static retrieval query, use this tutor’s own stored documents
         docs = self.retriever.get_relevant_documents(f"Core concepts of {self.name}")
         context = "\n".join([f"```markdown\n{d.page_content}\n```" for d in docs])
 
@@ -116,7 +115,6 @@ class MarkdownTutor:
         try:
             quiz_data = json.loads(response)
         except json.JSONDecodeError:
-            # try to recover if JSON is malformed
             fixed_json = response[response.find("[") : response.rfind("]") + 1]
             quiz_data = json.loads(fixed_json)
 
@@ -140,7 +138,7 @@ class MarkdownTutor:
                 "questions": [],
                 "current": 0,
                 "score": 0,
-            }  # Reset for next time
+            }
             return f"🎉 You've completed the quiz!\nYour final score: {score}/{total} ({percent}%)"
 
         q = self.quiz["questions"][self.quiz["current"]]
@@ -162,7 +160,6 @@ class MarkdownTutor:
         q = self.quiz["questions"][self.quiz["current"]]
         correct = q["answer"].strip().lower()
 
-        # Handle multiple choice
         if "options" in q:
             opts = [opt.lower() for opt in q["options"]]
             if user_answer.strip().upper() in ["A", "B", "C", "D"]:
@@ -170,7 +167,6 @@ class MarkdownTutor:
                 user_answer = q["options"][index]
             user_correct = user_answer.strip().lower() == correct
         else:
-            # Fuzzy check with LLM
             check_prompt = f"Question: {q['question']}\nCorrect answer: {correct}\nUser answer: {user_answer}\nIs the user's answer correct? Reply only 'Yes' or 'No'."
             verdict = self.llm.invoke(check_prompt).content.strip().lower()
             user_correct = "yes" in verdict

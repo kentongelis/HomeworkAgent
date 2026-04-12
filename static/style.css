@@ -172,7 +172,6 @@ button:active {
   clear: both;
 }
 
-/* === Responsive === */
 @media (max-width: 600px) {
   form, .lesson-box {
     padding: 1rem;
@@ -183,7 +182,6 @@ button:active {
   }
 }
 
-/* === Loading Spinner === */
 .spinner {
   display: flex;
   flex-direction: column;
